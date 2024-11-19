@@ -9,3 +9,15 @@
 ```sh
 cargo run
 ```
+
+### Migrations
+
+Create migration
+```sh
+diesel migration generate <name>
+```
+
+Run migrations
+```sh
+diesel migration run
+```
