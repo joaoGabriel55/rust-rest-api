@@ -1,6 +1,6 @@
 use std::{env, sync::Arc};
 
-use axum::{routing::{delete, get, post}, Router};
+use axum::{routing::{delete, get, post, put}, Router};
 use diesel::{r2d2::{self, ConnectionManager}, PgConnection};
 use dotenvy::dotenv;
 use tokio::signal;
@@ -25,7 +25,7 @@ async fn main() {
         .route("/todos", post(handlers::create_todo))
         .route("/todos", get(handlers::get_todos))
         .route("/todos/:id", get(handlers::get_todo))
-        .route("/todos/:id", post(handlers::update_todo))
+        .route("/todos/:id", put(handlers::update_todo))
         .route("/todos/:id", delete(handlers::delete_todo))
         .with_state(db_connection.clone());
 
