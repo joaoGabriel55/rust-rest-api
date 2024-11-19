@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
 use crate::models::{NewTodo, Todo, UpdateTodo};
-use crate::schema::todos;
-use crate::schema::todos::id;
+use crate::schema::todos::{created_at, id};
+use crate::schema::todos::{self, updated_at};
 use axum::extract::Path;
 use axum::{extract::State, http::StatusCode, Json};
+use diesel::dsl::now;
 use diesel::prelude::*;
 use diesel::r2d2;
 use diesel::r2d2::ConnectionManager;
@@ -35,7 +36,7 @@ pub async fn get_todos(State(db): State<DbPool>) -> (StatusCode, Json<Vec<Todo>>
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
         .unwrap();
 
-    let results = todos::table
+    let results = todos::table.order_by(created_at.desc())
         .load::<Todo>(&mut conn)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
         .unwrap();
@@ -56,7 +57,7 @@ pub async fn get_todo(
         .find(todo_id)
         .get_result::<Todo>(&mut conn)
         .optional();
-    
+
     match result {
         Ok(Some(todo)) => (StatusCode::OK, Json(Some(todo))),
         Ok(None) => (StatusCode::NOT_FOUND, Json(None)),
@@ -75,7 +76,7 @@ pub async fn update_todo(
         .unwrap();
 
     let todo = diesel::update(todos::table.filter(id.eq(todo_id)))
-        .set(&update_todo)
+        .set((updated_at.eq(now), &update_todo))
         .get_result(&mut conn)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
         .unwrap();
