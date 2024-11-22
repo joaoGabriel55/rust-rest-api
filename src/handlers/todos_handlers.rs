@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use crate::models::{NewTodo, Todo, UpdateTodo};
-use crate::schema::todos::{created_at, id};
 use crate::schema::todos::{self, updated_at};
+use crate::schema::todos::{created_at, id};
 use axum::extract::Path;
 use axum::{extract::State, http::StatusCode, Json};
 use diesel::dsl::now;
@@ -36,7 +36,8 @@ pub async fn get_todos(State(db): State<DbPool>) -> (StatusCode, Json<Vec<Todo>>
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
         .unwrap();
 
-    let results = todos::table.order_by(created_at.desc())
+    let results = todos::table
+        .order_by(created_at.desc())
         .load::<Todo>(&mut conn)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
         .unwrap();

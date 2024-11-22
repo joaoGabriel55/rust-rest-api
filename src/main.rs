@@ -1,13 +1,17 @@
 use std::{env, sync::Arc};
 
-use axum::{routing::{delete, get, post, put}, Router};
-use diesel::{r2d2::{self, ConnectionManager}, PgConnection};
+use axum::Router;
+use diesel::{
+    r2d2::{self, ConnectionManager},
+    PgConnection,
+};
 use dotenvy::dotenv;
 use tokio::signal;
 
 mod handlers;
-mod schema;
 mod models;
+mod routes;
+mod schema;
 
 #[tokio::main]
 async fn main() {
@@ -21,13 +25,10 @@ async fn main() {
         .expect("Failed to create pool.");
     let db_connection = Arc::new(pool);
 
-    let app = Router::new()
-        .route("/todos", post(handlers::create_todo))
-        .route("/todos", get(handlers::get_todos))
-        .route("/todos/:id", get(handlers::get_todo))
-        .route("/todos/:id", put(handlers::update_todo))
-        .route("/todos/:id", delete(handlers::delete_todo))
-        .with_state(db_connection.clone());
+    let todos_router = routes::todos_routes(db_connection.clone());
+
+    // Combine the routers
+    let app = Router::new().merge(todos_router);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
     let server = axum::serve(listener, app).with_graceful_shutdown(shutdown_signal());
